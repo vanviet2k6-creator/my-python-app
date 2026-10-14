@@ -8,12 +8,29 @@ from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 from myapp.calculator import Calculator
 
 
+def calculate_value(payload, operations):
+    if not isinstance(payload, dict):
+        raise ValueError("Request must be a JSON object")
+    operation = payload.get("operation")
+    if not isinstance(operation, str) or operation not in operations:
+        raise ValueError("Unknown operation")
+    a, b = payload.get("a"), payload.get("b")
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in (a, b)):
+        raise ValueError("a and b must be finite numbers")
+    if not all(math.isfinite(value) for value in (a, b)):
+        raise ValueError("a and b must be finite numbers")
+    result = operations[operation](a, b)
+    if not math.isfinite(result):
+        raise ValueError("Result is outside the supported numeric range")
+    return result
+
+
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_mapping(SECRET_KEY=os.environ.get("APP_SECRET_KEY"), MAX_CONTENT_LENGTH=16384)
     if test_config:
         app.config.update(test_config)
-    if not app.config["SECRET_KEY"]:
+    if not app.secret_key:
         raise RuntimeError("APP_SECRET_KEY must be configured")
     CSRFProtect(app)
     calculator = Calculator()
@@ -42,21 +59,8 @@ def create_app(test_config=None):
 
     @app.post("/api/calculate")
     def calculate():
-        payload = request.get_json(silent=True)
-        if not isinstance(payload, dict):
-            return jsonify(error="Request must be a JSON object"), 400
-        operation = payload.get("operation")
-        if not isinstance(operation, str) or operation not in operations:
-            return jsonify(error="Unknown operation"), 400
-        a, b = payload.get("a"), payload.get("b")
-        if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in (a, b)):
-            return jsonify(error="a and b must be finite numbers"), 400
         try:
-            if not all(math.isfinite(value) for value in (a, b)):
-                raise ValueError("a and b must be finite numbers")
-            result = operations[operation](a, b)
-            if not math.isfinite(result):
-                raise ValueError("Result is outside the supported numeric range")
+            result = calculate_value(request.get_json(silent=True), operations)
         except (ValueError, OverflowError) as error:
             return jsonify(error=str(error)), 400
         return jsonify(result=result)
