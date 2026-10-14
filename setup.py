@@ -6,6 +6,6 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     package_data={'myapp': ['templates/*.html']},
-    install_requires=['Flask>=3.1,<4'],
+    install_requires=['Flask>=3.1,<4', 'Flask-WTF>=1.3,<2'],
     python_requires='>=3.10',
 )

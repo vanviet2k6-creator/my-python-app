@@ -1,13 +1,21 @@
 """HTTP interface for the calculator used by the deployment exercise."""
 import math
+import os
 
 from flask import Flask, jsonify, render_template, request
+from flask_wtf.csrf import CSRFError, CSRFProtect, generate_csrf
 
 from myapp.calculator import Calculator
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
+    app.config.from_mapping(SECRET_KEY=os.environ.get("APP_SECRET_KEY"), MAX_CONTENT_LENGTH=16384)
+    if test_config:
+        app.config.update(test_config)
+    if not app.config["SECRET_KEY"]:
+        raise RuntimeError("APP_SECRET_KEY must be configured")
+    CSRFProtect(app)
     calculator = Calculator()
     operations = {
         "add": calculator.add,
@@ -23,6 +31,14 @@ def create_app():
     @app.get("/health")
     def health():
         return jsonify(status="ok")
+
+    @app.get("/api/csrf")
+    def csrf_token():
+        return jsonify(csrf_token=generate_csrf())
+
+    @app.errorhandler(CSRFError)
+    def csrf_error(error):
+        return jsonify(error=error.description), 400
 
     @app.post("/api/calculate")
     def calculate():

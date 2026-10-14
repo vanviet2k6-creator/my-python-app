@@ -48,4 +48,4 @@ export PYTHONPATH=src
 pytest tests/
 ```
 
-Chạy web cục bộ: `flask --app myapp.web:create_app run` (sau khi đặt `PYTHONPATH=src`).
+Chạy web cục bộ: đặt `PYTHONPATH=src` và `APP_SECRET_KEY` là khóa ngẫu nhiên, rồi chạy `flask --app myapp.web:create_app run`.

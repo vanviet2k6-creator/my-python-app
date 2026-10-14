@@ -6,5 +6,7 @@ services:
       context: .
       target: runtime
     restart: unless-stopped
+    environment:
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY is required}
     ports:
       - "${APP_PORT:-8000}:8080"

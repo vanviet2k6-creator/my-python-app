@@ -85,22 +85,32 @@ pipeline {
         }
         stage('Build image') {
             when { expression { params.DEPLOY } }
-            steps { sh 'docker compose build web' }
+            steps {
+                withCredentials([string(credentialsId: 'my-python-app-secret-key', variable: 'APP_SECRET_KEY')]) {
+                    sh 'docker compose build web'
+                }
+            }
         }
         stage('Deploy') {
             when { expression { params.DEPLOY } }
-            steps { sh 'docker compose up -d --no-build --pull never --wait --wait-timeout 120 web' }
+            steps {
+                withCredentials([string(credentialsId: 'my-python-app-secret-key', variable: 'APP_SECRET_KEY')]) {
+                    sh 'docker compose up -d --no-build --pull never --wait --wait-timeout 120 web'
+                }
+            }
         }
         stage('Smoke test') {
             when { expression { params.DEPLOY } }
             steps {
+                withCredentials([string(credentialsId: 'my-python-app-secret-key', variable: 'APP_SECRET_KEY')]) {
                 sh '''
                     code=$(curl --connect-timeout 3 --max-time 10 -s -o /dev/null -w '%{http_code}' "http://$SMOKE_HOST:$APP_PORT/health")
                     test "$code" = 200
                     container=$(docker compose ps --quiet web)
-                    docker exec "$container" python -c 'import json, urllib.request; request=urllib.request.Request("http://localhost:8080/api/calculate", data=json.dumps({"operation":"add","a":2,"b":3}).encode(), headers={"Content-Type":"application/json"}); response=urllib.request.urlopen(request, timeout=5); assert json.load(response)["result"] == 5'
+                    docker exec "$container" python -c 'import json, http.cookiejar, urllib.request; opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())); token=json.load(opener.open("http://localhost:8080/api/csrf", timeout=5))["csrf_token"]; request=urllib.request.Request("http://localhost:8080/api/calculate", data=json.dumps({"operation":"add","a":2,"b":3}).encode(), headers={"Content-Type":"application/json","X-CSRFToken":token}); response=opener.open(request, timeout=5); assert json.load(response)["result"] == 5'
                     docker compose ps
                 '''
+                }
             }
         }
     }

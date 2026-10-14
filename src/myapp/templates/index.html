@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Máy tính Python</title>
   <style>
     body { font: 18px system-ui, sans-serif; background: #f2f5f8; color: #182b40; margin: 0; padding: 6vh 20px; }
@@ -33,7 +34,7 @@
       output.textContent = 'Đang tính…';
       try {
         const response = await fetch('/api/calculate', {
-          method: 'POST', headers: {'Content-Type': 'application/json'},
+          method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content},
           body: JSON.stringify({a: Number(document.getElementById('a').value), b: Number(document.getElementById('b').value), operation: document.getElementById('operation').value})
         });
         const data = await response.json();

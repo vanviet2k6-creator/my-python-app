@@ -7,6 +7,7 @@ Pipeline chạy trên Linux agent có Docker CLI, Compose và curl. Jenkins tron
 Plugins: Pipeline, Git, SonarQube Scanner, JUnit, Timestamper, Stage View.
 Tool `sonar-scanner`; server `SonarQube` dùng URL `http://sonarqube:9000`, credential Secret text `sonar-token`.
 Job Pipeline from SCM dùng repo GitHub này, branch cần triển khai và Script Path `Jenkinsfile`. Repo public không cần credential Git; repo private cần tài khoản/token có quyền đọc repo.
+Credential Secret text `my-python-app-secret-key` chứa khóa ký session/CSRF mạnh, dùng chung cho các worker. Chỉ truyền vào container khi deploy, không commit khóa vào repo. API POST yêu cầu cookie session và header `X-CSRFToken` lấy từ `/api/csrf`; giao diện tự gửi token.
 
 ## SonarQube
 
@@ -33,6 +34,7 @@ Thư viện `Calculator` được giữ nguyên. Flask bổ sung giao diện và
 Chạy Docker thủ công:
 
 ```bash
+export APP_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 APP_VERSION=local docker compose build web
 APP_VERSION=local docker compose up -d --no-build --wait web
 ```
