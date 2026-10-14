@@ -1,6 +1,10 @@
 # my-python-app
 
-Project mẫu phục vụ bài thực hành Jenkins Pipeline (Checkout → Compile → Unit Test → Package).
+Ứng dụng máy tính Python cho bài thực hành CI/CD:
+GitHub → Jenkins → compile → pytest + coverage → package → SonarQube → Quality Gate → Docker deploy → smoke test.
+
+Ứng dụng sau deploy: http://localhost:8000. API health: `/health`; API tính toán: `POST /api/calculate`.
+Hướng dẫn cấu hình và nghiệm thu: [CICD.md](CICD.md).
 
 ## Cấu trúc
 
@@ -39,7 +43,9 @@ Khi git hỏi xác thực: dùng username GitHub + dán Personal Access Token (k
 ```bash
 python3 -m venv venv
 . venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 export PYTHONPATH=src
 pytest tests/
 ```
+
+Chạy web cục bộ: đặt `PYTHONPATH=src` và `APP_SECRET_KEY` là khóa ngẫu nhiên, rồi chạy `flask --app myapp.web:create_app run`.

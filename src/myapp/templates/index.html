@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Máy tính Python</title>
+  <style>
+    body { font: 18px system-ui, sans-serif; background: #f2f5f8; color: #182b40; margin: 0; padding: 6vh 20px; }
+    main { max-width: 540px; margin: auto; background: white; padding: 32px; border-radius: 16px; }
+    label { display: block; margin: 20px 0 8px; }
+    input, select, button { box-sizing: border-box; width: 100%; font: inherit; padding: 12px; border: 1px solid #bcc9d7; border-radius: 8px; }
+    button { margin-top: 24px; background: #155eae; color: white; cursor: pointer; }
+    output { display: block; margin-top: 24px; min-height: 28px; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Máy tính Python</h1>
+    <p>Thực hiện bốn phép tính cơ bản.</p>
+    <form id="calculator">
+      <label for="a">Số thứ nhất</label><input id="a" type="number" step="any" required value="2">
+      <label for="operation">Phép tính</label>
+      <select id="operation"><option value="add">Cộng</option><option value="subtract">Trừ</option><option value="multiply">Nhân</option><option value="divide">Chia</option></select>
+      <label for="b">Số thứ hai</label><input id="b" type="number" step="any" required value="3">
+      <button type="submit">Tính kết quả</button>
+    </form>
+    <output id="result" aria-live="polite"></output>
+  </main>
+  <script>
+    document.getElementById('calculator').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const output = document.getElementById('result');
+      output.textContent = 'Đang tính…';
+      try {
+        const response = await fetch('/api/calculate', {
+          method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content},
+          body: JSON.stringify({a: Number(document.getElementById('a').value), b: Number(document.getElementById('b').value), operation: document.getElementById('operation').value})
+        });
+        const data = await response.json();
+        output.textContent = response.ok ? `Kết quả: ${data.result}` : data.error;
+      } catch {
+        output.textContent = 'Không kết nối được máy chủ. Vui lòng thử lại.';
+      }
+    });
+  </script>
+</body>
+</html>

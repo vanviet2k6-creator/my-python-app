@@ -1,0 +1,12 @@
+name: my-python-app
+services:
+  web:
+    image: ${APP_IMAGE:-my-python-app}:${APP_VERSION:?APP_VERSION is required}
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    environment:
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY is required}
+    ports:
+      - "${APP_PORT:-8000}:8080"
